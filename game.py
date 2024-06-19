@@ -1,5 +1,9 @@
+from game_flow import GameFlow
+
+
 def main():
-    pass
+    flow = GameFlow()
+    flow.play()
 
 
 if __name__ == '__main__':

@@ -1,6 +1,8 @@
 from player import Player
 from card_deck import CardDeck
 from printer import Printer
+from file_handler import FileHandler
+import random
 
 
 class GameFlow:
@@ -17,6 +19,7 @@ class GameFlow:
         self._words_said = 0
         self._jr = None
         self._jb = None
+        self._logger = FileHandler()
 
     def init_players(self):
         player_names = set()
@@ -35,7 +38,19 @@ class GameFlow:
 
     def play(self):
         self.init_players()
-        self.play_quarter()
+        for _ in range(4):
+            for player in self._players:
+                player.on_prime = True
+                player.points = 0
+            self.play_quarter()
+            self._quarter += 1
+            self._round = 1
+        self.log()
+
+    def log(self):
+        user_input = input("Do you want to save game(y/n)")
+        if user_input == 'y' or user_input == 'Y':
+            self._logger.save(self._data)
 
     def play_quarter(self):
         self._data[self._quarter] = dict()
@@ -48,6 +63,7 @@ class GameFlow:
             self._current = self._first_player
             self.deal()
             self.set_bower()
+            self.sort_cards()
             self.say_words()
             self.play_hand()
             self.set_points_and_prime()
@@ -61,7 +77,8 @@ class GameFlow:
                 player.cards_taken = 0
                 player.word = 0
                 player.points = 0
-            self.print_points_table()
+            if self._round < 4:
+                self.print_points_table()
             self._words_said = 0
             self._jr = None
             self._jb = None
@@ -69,10 +86,10 @@ class GameFlow:
 
         for index in range(4):
             if self._players[index].on_prime:
-                high_score = max(self._data[self._quarter].values(), key=lambda val: val[2 * index + 1])
-                self._players[index].total_points += high_score
+                high_score_list = max(self._data[self._quarter].values(), key=lambda val: val[2 * index + 1])
+                self._players[index].total_points += high_score_list[2 * index + 1]
 
-        self._data[self._quarter] = {self._round: []}
+        self._data[self._quarter][self._round] = []
         for player in self._players:
             self._data[self._quarter][self._round].append(player.total_points)
 
@@ -81,8 +98,9 @@ class GameFlow:
     def print_points_table(self):
         for player in self._data["players"]:
             print(player, end='\t\t')
+        print()
 
-        for q in range(4):
+        for q in range(5):
             if q in self._data:
                 print("quarter " + str(q) + ":")
                 for val in self._data[q].values():
@@ -94,8 +112,7 @@ class GameFlow:
                         for i in range(4):
                             print(f"{val[2 * i]}: {val[2 * i + 1]}", end='\t\t')
                         print()
-
-            print()
+        print()
 
     def set_points_and_prime(self):
         for player in self._players:
@@ -122,10 +139,12 @@ class GameFlow:
             print('\n')
 
     def deal(self):
-        deck = set(CardDeck.full_deck())
+        deck = CardDeck.full_deck()
         for player in self._players:
             for _ in range(9):
-                player.cards.append(deck.pop())
+                card = random.choice(deck)
+                deck.remove(card)
+                player.cards.append(card)
 
     def play_hand(self):
         print(f"\nround {self._round} begin: ")
@@ -164,7 +183,7 @@ class GameFlow:
             return 0
 
         bower_on_board = False
-        for card in self._board[0:3]:
+        for card in self._board[0:4]:
             if card[-1] == self._bower:
                 bower_on_board = True
 
@@ -247,10 +266,12 @@ class GameFlow:
     def joker_actions(self, joker):
         command = None
         if len(self._board) == 0:
-            text = "Please choose an action:\t1: Get\t2: Request high card\t3: Give it to suit: "
+            text = "Please choose an action:\t1: Get(*Request high bower)\t2: Request high card\t3: Give it to suit: "
             index = GameFlow.input_index(3, text)
             if index in (0, 1):
                 command = "Get"
+                if self._bower:
+                    command = "Request:" + self._bower
             else:
                 self._printer.print_cards_number(CardDeck.suits)
                 suit_index = GameFlow.input_index(4, "Please choose a suit: ")
@@ -300,6 +321,10 @@ class GameFlow:
         for player in self._players:
             print(f"{player.name}: {player.word}", end='\t\t')
         print()
+
+    def sort_cards(self):
+        for player in self._players:
+            player.cards = CardDeck.sort_cards(player.cards)
 
     @property
     def player(self):

@@ -2,8 +2,8 @@ from game_flow import GameFlow
 
 
 def main():
-    flow = GameFlow()
-    flow.play()
+    joker_game = GameFlow()
+    joker_game.play()
 
 
 if __name__ == '__main__':

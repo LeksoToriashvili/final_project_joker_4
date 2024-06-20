@@ -64,9 +64,6 @@ class Player:
     def points(self, points):
         self._points = points
 
-    def _sort_cards(self):
-        self._cards.sort()
-
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return self.name == other.name

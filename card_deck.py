@@ -44,3 +44,22 @@ class CardDeck:
             if card[-1] == suit:
                 return True
         return False
+
+    @staticmethod
+    def sort_cards(cards):
+        res = []
+        if 'JB' in cards:
+            res.append('JB')
+            cards.remove('JB')
+        if 'JR' in cards:
+            res.append('JR')
+            cards.remove('JR')
+
+        for suit in CardDeck.suits:
+            highest_card = True
+            while highest_card:
+                highest_card = CardDeck.highest_card(cards, suit)
+                if highest_card:
+                    res.append(highest_card)
+                    cards.remove(highest_card)
+        return res
